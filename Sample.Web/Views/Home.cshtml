@@ -1,0 +1,6 @@
+﻿@inherits Umbraco.Web.Mvc.UmbracoTemplatePage<IPublishedContent>
+@{
+    Layout = "Master.cshtml";
+}
+
+@CurrentPage.GetGridHtml("content", "fanoe")

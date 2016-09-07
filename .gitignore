@@ -243,3 +243,7 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+
+App_Data/
+umbraco/
+umbraco_client/
