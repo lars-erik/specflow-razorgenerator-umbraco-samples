@@ -4,23 +4,19 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
 using ASP;
 using Moq;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using RazorGenerator.Testing;
 using Sample.Tests.MvcBindings;
 using TechTalk.SpecFlow;
-using Umbraco.Core;
 using Umbraco.Core.Configuration.UmbracoSettings;
+using Umbraco.Core.IO;
 using Umbraco.Core.Logging;
 using Umbraco.Core.Models;
-using Umbraco.Core.ObjectResolution;
-using Umbraco.Core.Persistence;
 using Umbraco.Core.PropertyEditors;
 using Umbraco.Core.PropertyEditors.ValueConverters;
 using Umbraco.Tests.TestHelpers;
@@ -28,24 +24,57 @@ using Umbraco.Web;
 using Umbraco.Web.Models;
 using Umbraco.Web.Routing;
 using File = System.IO.File;
-using WebViewPageExtensions = RazorGenerator.Testing.WebViewPageExtensions;
 
-namespace Sample.Tests
+namespace Sample.Tests.UmbracoBindings
 {
     [Binding]
-    //[DatabaseTestBehavior(DatabaseBehavior)]
-    public class MinimalReadContentTypeWithGrid : BaseDatabaseFactoryTest
+    public class UmbracoRenderingBindings : BaseDatabaseFactoryTest
     {
         private readonly ViewsUnderTest viewsUnderTest;
         private UmbracoContext umbracoContext;
         private RoutingContext routingContext;
         private IUmbracoSettingsSection settings;
-        private string output;
 
-        public MinimalReadContentTypeWithGrid(ViewsUnderTest viewsUnderTest)
+        public UmbracoRenderingBindings(ViewsUnderTest viewsUnderTest)
         {
             this.viewsUnderTest = viewsUnderTest;
-            viewsUnderTest.AddPartial<_Views_Partials_Grid_Fanoe_cshtml>("Grid/Grid/fanoe");
+            viewsUnderTest.AddPartial<_Views_Partials_Grid_Fanoe_cshtml>("Grid/fanoe");
+            viewsUnderTest.AddPartial<_Views_Partials_Grid_Editors_Base_cshtml>("grid/editors/base");
+            viewsUnderTest.AddPartial<_Views_Partials_Grid_Editors_Textstring_cshtml>("grid/editors/textstring");
+            viewsUnderTest.AddPartial<_Views_Partials_Grid_Editors_Rte_cshtml>("grid/editors/rte");
+        }
+
+        [When("I render (.*)")]
+        public void RenderHome(string route)
+        {
+            var content = umbracoContext.ContentCache.GetByRoute(route, true);
+
+            // TODO: Select view for template
+            var view = new _Views_TextPage_cshtml();
+            var renderModel = new RenderModel<IPublishedContent>(content, CultureInfo.InvariantCulture);
+            StubViewContext(view, renderModel);
+            viewsUnderTest.Instance = view;
+            viewsUnderTest.RenderAsHtml(renderModel);
+
+            Console.WriteLine(viewsUnderTest.Output);
+        }
+
+        [Then("the result should contain \"(.*)\"")]
+        public void TheResultShouldContain(string value)
+        {
+            Assert.That(viewsUnderTest.Output, Is.Not.Null.And.ContainsSubstring(value));
+        }
+
+        [Then("the result should contain")]
+        public void TheResultShouldContainMultiline(string value)
+        {
+            Assert.That(viewsUnderTest.Output, Is.Not.Null.And.ContainsSubstring(value));
+        }
+
+        [BeforeFeature]
+        public static void BeforeFeature()
+        {
+            IOHelper.IAmUnitTestingSoNeverUseHttpContextEver = true;
         }
 
         [BeforeScenario()]
@@ -60,27 +89,11 @@ namespace Sample.Tests
             SetupUmbraco();
         }
 
-        [When("I render (.*)")]
-        public void RenderHome(string route)
+        [AfterScenario()]
+        public override void TearDown()
         {
-            // TODO: Bloody forked! Either HttpContext.Current fucks up IOHelper, or lack of it fucks up grid initialization
-
-            var content = umbracoContext.ContentCache.GetByRoute(route, true);
-
-            var view = new _Views_TextPage_cshtml();
-            var renderModel = new RenderModel<IPublishedContent>(content, CultureInfo.InvariantCulture);
-
-            StubViewContext(view, renderModel);
-
-            output = view.Render(umbracoContext.HttpContext, renderModel);
-
-            Console.WriteLine(output);
-        }
-
-        [Then("the result should contain \"(.*)\"")]
-        public void TheResultShouldContain(string value)
-        {
-            Assert.That(output, Is.Not.Null.And.ContainsSubstring(value));
+            HttpContext.Current = null;
+            base.TearDown();
         }
 
         protected override void FreezeResolution()
@@ -98,7 +111,6 @@ namespace Sample.Tests
                     typeof (IEnumerable<Type>)
                 }, new ParameterModifier[0]);
 
-            //PropertyValueConvertersResolver.Current.AddType(typeof(JsonValueConverter));
             PropertyValueConvertersResolver.Current = (PropertyValueConvertersResolver)converterCtor.Invoke(new object[] { activator, Logger, new Type[0] });
             PropertyValueConvertersResolver.Current.AddType(typeof(GridValueConverter));
 

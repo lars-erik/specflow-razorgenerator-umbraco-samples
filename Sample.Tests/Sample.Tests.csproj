@@ -299,7 +299,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\RazorGeneratorMvcStart.cs" />
-    <Compile Include="MinimalReadContentTypeWithGrid.cs" />
+    <Compile Include="Posting to actions.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Posting to actions.feature</DependentUpon>
+    </Compile>
+    <Compile Include="PostingToActionsSteps.cs" />
+    <Compile Include="UmbracoBindings\UmbracoRenderingBindings.cs" />
     <Compile Include="MvcBindings\ControllersUnderTest.cs" />
     <Compile Include="MvcBindings\ControllersUnderTestFactory.cs" />
     <Compile Include="MvcBindings\ControllersUnderTestSteps.cs" />
@@ -316,6 +322,10 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <None Include="Posting to actions.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>Posting to actions.feature.cs</LastGenOutput>
+    </None>
     <None Include="Rendering TextPage.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>Rendering TextPage.feature.cs</LastGenOutput>

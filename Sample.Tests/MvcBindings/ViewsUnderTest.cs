@@ -17,6 +17,8 @@ namespace Sample.Tests.MvcBindings
         public HttpContext HttpContext { get; private set; }
         public HttpContextBase HttpContextBase { get; private set; }
 
+        public string Output => Document.DocumentNode.OuterHtml;
+
         public ViewsUnderTest()
         {
             ViewEngine = new ViewsUnderTestViewEngine();

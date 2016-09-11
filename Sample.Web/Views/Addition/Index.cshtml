@@ -1,0 +1,12 @@
+﻿@model Sample.Web.Models.AdditionModel
+<div>
+    @using (Html.BeginUmbracoForm("Add", "Addition", FormMethod.Post, new { @class = "form form-horizontal", role = "form" }))
+    {
+        <div class="form-group">
+            <input type="number" name="A" value="@Model.A"/> +
+            <input type="number" name="B" value="@Model.B"/> =
+            <label name="result">@Model.Result</label>
+            <button type="submit">Add</button>
+        </div>
+    }
+</div>
