@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
 using System.Web;
@@ -19,21 +20,33 @@ namespace Sample.Tests.MvcBindings
 
         public string Output => Document.DocumentNode.OuterHtml;
 
+        public HtmlNode DocumentNode => Document.DocumentNode;
+
         public ViewsUnderTest()
         {
             ViewEngine = new ViewsUnderTestViewEngine();
             HttpContextBase = CreateHttpContext();
         }
 
+        public void SetInstanceFromViewResult(ViewResult viewResult)
+        {
+            Instance = ViewEngine.CreateView(viewResult.ViewName);
+        }
+
+        public void SetInstanceFromViewResult(PartialViewResult viewResult)
+        {
+            Instance = ViewEngine.CreatePartialView(viewResult.ViewName);
+        }
+
         public HtmlDocument RenderAsHtml()
         {
-            Document = ((WebViewPage<object>) Instance).RenderAsHtml(HttpContextBase);
+            Document = ((WebViewPage<object>)Instance).RenderAsHtml(HttpContextBase, null);
             return Document;
         }
 
         public HtmlDocument RenderAsHtml<TModel>(TModel model)
         {
-            Document = ((WebViewPage<TModel>) Instance).RenderAsHtml(HttpContextBase, model);
+            Document = ((WebViewPage<TModel>)Instance).RenderAsHtml(HttpContextBase, model);
             return Document;
         }
 
@@ -43,6 +56,7 @@ namespace Sample.Tests.MvcBindings
         /// <typeparam name="TPartial"></typeparam>
         /// <param name="path"></param>
         public void AddPartial<TPartial>(string path)
+            where TPartial : WebViewPage
         {
             ViewEngine.AddPartial<TPartial>(path);
         }
@@ -52,7 +66,8 @@ namespace Sample.Tests.MvcBindings
         /// </summary>
         /// <typeparam name="TPartial"></typeparam>
         /// <param name="path"></param>
-        public void Add<TView>(string path)
+        public void AddView<TView>(string path)
+            where TView : WebViewPage
         {
             ViewEngine.Add<TView>(path);
         }
@@ -70,6 +85,7 @@ namespace Sample.Tests.MvcBindings
             Mock.Get(httpContextBase).Setup(c => c.Request).Returns(Mock.Of<HttpRequestBase>());
             Mock.Get(httpContextBase).Setup(c => c.Response).Returns(Mock.Of<HttpResponseBase>());
             Mock.Get(httpContextBase).Setup(c => c.Server).Returns(() => new HttpServerUtilityWrapper(httpContext.Server));
+            Mock.Get(httpContextBase.Request).Setup(r => r.QueryString).Returns(new NameValueCollection());
             Mock.Get(httpContextBase.Request).Setup(r => r.Form).Returns(httpContext.Request.Form);
             Mock.Get(httpContextBase.Request).Setup(r => r.Unvalidated).Returns(new UnvalidatedRequestValuesWrapper(httpContext.Request.Unvalidated));
             Mock.Get(httpContextBase.Request).Setup(r => r.Files).Returns(Mock.Of<HttpFileCollectionBase>());

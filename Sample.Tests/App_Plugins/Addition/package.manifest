@@ -1,0 +1,11 @@
+﻿{
+    "gridEditors": [
+        {
+            "alias": "addition",
+            "name": "Addition",
+            "view": "~/App_Plugins/Addition/addition-editor.html",
+            "render": "addition",
+            "icon":  "icon-plus"
+        }
+    ]
+}

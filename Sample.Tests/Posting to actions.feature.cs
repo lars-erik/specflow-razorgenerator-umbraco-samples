@@ -19,6 +19,7 @@ namespace Sample.Tests
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [NUnit.Framework.TestFixtureAttribute()]
     [NUnit.Framework.DescriptionAttribute("Posting to actions")]
+    [NUnit.Framework.CategoryAttribute("Umbraco")]
     public partial class PostingToActionsFeature
     {
         
@@ -32,7 +33,8 @@ namespace Sample.Tests
         {
             testRunner = TechTalk.SpecFlow.TestRunnerManager.GetTestRunner();
             TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Posting to actions", "\tIn order to avoid silly mistakes\r\n\tAs a programmer idiot\r\n\tI want to be told my " +
-                    "code can add two numbers", ProgrammingLanguage.CSharp, ((string[])(null)));
+                    "code can add two numbers", ProgrammingLanguage.CSharp, new string[] {
+                        "Umbraco"});
             testRunner.OnFeatureStart(featureInfo);
         }
         
@@ -66,11 +68,9 @@ namespace Sample.Tests
         
         [NUnit.Framework.TestAttribute()]
         [NUnit.Framework.DescriptionAttribute("Add two numbers")]
-        [NUnit.Framework.CategoryAttribute("mytag")]
         public virtual void AddTwoNumbers()
         {
-            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Add two numbers", new string[] {
-                        "mytag"});
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Add two numbers", ((string[])(null)));
 #line 7
 this.ScenarioSetup(scenarioInfo);
 #line 8

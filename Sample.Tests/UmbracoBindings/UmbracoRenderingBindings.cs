@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -7,16 +8,15 @@ using System.Reflection;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
-using ASP;
 using Moq;
 using NUnit.Framework;
-using RazorGenerator.Testing;
 using Sample.Tests.MvcBindings;
 using TechTalk.SpecFlow;
 using Umbraco.Core.Configuration.UmbracoSettings;
 using Umbraco.Core.IO;
 using Umbraco.Core.Logging;
 using Umbraco.Core.Models;
+using Umbraco.Core.Models.PublishedContent;
 using Umbraco.Core.PropertyEditors;
 using Umbraco.Core.PropertyEditors.ValueConverters;
 using Umbraco.Tests.TestHelpers;
@@ -28,33 +28,40 @@ using File = System.IO.File;
 namespace Sample.Tests.UmbracoBindings
 {
     [Binding]
+    [Scope(Tag = "Umbraco")]
     public class UmbracoRenderingBindings : BaseDatabaseFactoryTest
     {
+        private bool usingTypedModels = false;
+
         private readonly ViewsUnderTest viewsUnderTest;
+        private readonly UmbracoViewsUnderTest umbracoViewsUnderTest;
         private UmbracoContext umbracoContext;
         private RoutingContext routingContext;
         private IUmbracoSettingsSection settings;
 
-        public UmbracoRenderingBindings(ViewsUnderTest viewsUnderTest)
+        public UmbracoRenderingBindings(ViewsUnderTest viewsUnderTest, UmbracoViewsUnderTest umbracoViewsUnderTest)
         {
             this.viewsUnderTest = viewsUnderTest;
-            viewsUnderTest.AddPartial<_Views_Partials_Grid_Fanoe_cshtml>("Grid/fanoe");
-            viewsUnderTest.AddPartial<_Views_Partials_Grid_Editors_Base_cshtml>("grid/editors/base");
-            viewsUnderTest.AddPartial<_Views_Partials_Grid_Editors_Textstring_cshtml>("grid/editors/textstring");
-            viewsUnderTest.AddPartial<_Views_Partials_Grid_Editors_Rte_cshtml>("grid/editors/rte");
+            this.umbracoViewsUnderTest = umbracoViewsUnderTest;
+            umbracoViewsUnderTest.LoadedContent += AssignToPublishedContentRequest;
+        }
+
+        private void AssignToPublishedContentRequest(object sender, EventArgs e)
+        {
+            umbracoContext.PublishedContentRequest.PublishedContent = umbracoViewsUnderTest.Content;
+            umbracoContext.PublishedContentRequest.Prepare();
         }
 
         [When("I render (.*)")]
-        public void RenderHome(string route)
+        public void WhenIRender(string route)
         {
-            var content = umbracoContext.ContentCache.GetByRoute(route, true);
-
-            // TODO: Select view for template
-            var view = new _Views_TextPage_cshtml();
-            var renderModel = new RenderModel<IPublishedContent>(content, CultureInfo.InvariantCulture);
-            StubViewContext(view, renderModel);
-            viewsUnderTest.Instance = view;
-            viewsUnderTest.RenderAsHtml(renderModel);
+            umbracoViewsUnderTest.LoadAtRoute(route);
+            umbracoViewsUnderTest.SetupView();
+            
+            if (usingTypedModels)
+                viewsUnderTest.RenderAsHtml(umbracoViewsUnderTest.Content);
+            else
+                viewsUnderTest.RenderAsHtml(new RenderModel<IPublishedContent>(umbracoViewsUnderTest.Content, CultureInfo.CurrentCulture));
 
             Console.WriteLine(viewsUnderTest.Output);
         }
@@ -77,7 +84,7 @@ namespace Sample.Tests.UmbracoBindings
             IOHelper.IAmUnitTestingSoNeverUseHttpContextEver = true;
         }
 
-        [BeforeScenario()]
+        [BeforeScenario(Order=1)]
         public override void Initialize()
         {
             InitializeFixture();
@@ -87,6 +94,8 @@ namespace Sample.Tests.UmbracoBindings
             HttpContext.Current = viewsUnderTest.HttpContext;
 
             SetupUmbraco();
+
+            umbracoViewsUnderTest.UmbracoContext = umbracoContext;
         }
 
         [AfterScenario()]
@@ -103,7 +112,7 @@ namespace Sample.Tests.UmbracoBindings
                 .GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, new Type[0],
                     new ParameterModifier[0]);
             var activator = activatorCtor.Invoke(new object[0]);
-            var converterCtor = typeof (PropertyValueConvertersResolver)
+            var converterCtor = typeof(PropertyValueConvertersResolver)
                 .GetConstructor(internalShit, null, new[]
                 {
                     typeof (IServiceProvider),
@@ -113,6 +122,19 @@ namespace Sample.Tests.UmbracoBindings
 
             PropertyValueConvertersResolver.Current = (PropertyValueConvertersResolver)converterCtor.Invoke(new object[] { activator, Logger, new Type[0] });
             PropertyValueConvertersResolver.Current.AddType(typeof(GridValueConverter));
+
+            // TODO: Typed models in sample.web
+            //var modules = typeof(Page).Assembly.GetTypes();
+            //var types = modules.Where(t => typeof(PublishedContentModel).IsAssignableFrom(t));
+            //PublishedContentModelFactoryResolver.Current = (PublishedContentModelFactoryResolver)
+            //    typeof(PublishedContentModelFactoryResolver)
+            //    .GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IPublishedContentModelFactory) }, null)
+            //    .Invoke(new object[] { new PublishedContentModelFactory(types) });
+
+            LoggerResolver.Current = new LoggerResolver(Mock.Of<ILogger>());
+            typeof(LoggerResolver)
+                .GetProperty("CanResolveBeforeFrozen", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(LoggerResolver.Current, true);
 
             base.FreezeResolution();
         }
@@ -125,20 +147,25 @@ namespace Sample.Tests.UmbracoBindings
             routingContext = GetRoutingContext("http://localhost", -1, new RouteData());
             umbracoContext = routingContext.UmbracoContext;
             umbracoContext.PublishedContentRequest = new PublishedContentRequest(new Uri("http://localhost"), routingContext,
-                settings.WebRouting, (s) => new[] {"Kunde"});
+                settings.WebRouting, (s) => new[] { "Kunde" });
         }
 
-        private void StubViewContext(WebViewPage viewPage, RenderModel<IPublishedContent> renderModel)
+        private void StubViewContext(WebViewPage viewPage, object renderModel)
         {
             var controller = Mock.Of<Controller>();
             var controllerContext = new ControllerContext(umbracoContext.HttpContext, new RouteData(), controller);
             controller.ControllerContext = controllerContext;
-            viewPage.ViewContext = new ViewContext(controllerContext, Mock.Of<IView>(), new ViewDataDictionary {Model = renderModel}, new TempDataDictionary(), new StringWriter());
+            viewPage.ViewContext = new ViewContext(controllerContext, Mock.Of<IView>(), new ViewDataDictionary { Model = renderModel }, new TempDataDictionary(), new StringWriter());
         }
 
         protected override string GetDbConnectionString()
         {
-            return @"Data Source=..\..\..\Sample.Web\App_Data\Umbraco.sdf;Flush Interval=1;";
+            return ConfigurationManager.ConnectionStrings["umbracoDbDsn"].ConnectionString;
+        }
+
+        protected override string GetDbProviderName()
+        {
+            return ConfigurationManager.ConnectionStrings["umbracoDbDsn"].ProviderName;
         }
 
         protected RoutingContext GetRoutingContext(string url, int templateId, RouteData routeData = null, bool setUmbracoContextCurrent = false)
@@ -149,7 +176,7 @@ namespace Sample.Tests.UmbracoBindings
                 new DefaultUrlProvider(settings.RequestHandler)
             });
 
-            var rcctor = typeof (RoutingContext).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[]
+            var rcctor = typeof(RoutingContext).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[]
             {
                 typeof (UmbracoContext),
                 typeof (IEnumerable<IContentFinder>),
@@ -185,7 +212,7 @@ namespace Sample.Tests.UmbracoBindings
             {
                 if (contents == null)
                 {
-                    contents = File.ReadAllText("umbraco.config");
+                    contents = File.ReadAllText(@"..\..\umbraco.config");
                 }
                 return contents;
             }

@@ -4,9 +4,12 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.Mvc;
+using System.Web.Routing;
 using ASP;
 using NUnit.Framework;
 using Sample.Tests.MvcBindings;
+using Sample.Tests.UmbracoBindings;
 using Sample.Web.Controllers;
 using Sample.Web.Models;
 using TechTalk.SpecFlow;
@@ -20,11 +23,15 @@ namespace Sample.Tests
     public class PostingToActionsSteps
     {
         private readonly ViewsUnderTest viewsUnderTest;
+        private readonly UmbracoViewsUnderTest umbracoViewsUnderTest;
+        private readonly ControllersUnderTest controllersUnderTest;
         AdditionModel model = new AdditionModel();
 
-        public PostingToActionsSteps(ViewsUnderTest viewsUnderTest)
+        public PostingToActionsSteps(ViewsUnderTest viewsUnderTest, UmbracoViewsUnderTest umbracoViewsUnderTest, ControllersUnderTest controllersUnderTest)
         {
             this.viewsUnderTest = viewsUnderTest;
+            this.umbracoViewsUnderTest = umbracoViewsUnderTest;
+            this.controllersUnderTest = controllersUnderTest;
         }
 
         [Given(@"I have entered (.*) into A")]
@@ -42,21 +49,19 @@ namespace Sample.Tests
         [When(@"I press add")]
         public void WhenIPressAdd()
         {
-            Assert.Fail("CurrentUmbracoPage just does magic");
-            // Can do this, but ViewBag has to be injected into controllercontext
-            // see about controllersUnderTest
+            umbracoViewsUnderTest.LoadAtRoute("/learn/masterclasses");
+            umbracoViewsUnderTest.SetupView();
 
-            //var content =
-            //var view = new _Views_TextPage_cshtml();
-            //var renderModel = new RenderModel<IPublishedContent>(content, CultureInfo.InvariantCulture);
-            //StubViewContext(view, renderModel);
-            //viewsUnderTest.Instance = view;
-            //viewsUnderTest.RenderAsHtml(renderModel);
+            var routeData = new RouteData();
+            routeData.DataTokens.Add("ParentActionViewContext", viewsUnderTest.Instance.ViewContext);
 
-            //var controller = new AdditionController();
-            //var result = controller.Add(model);
+            var controller = new AdditionController();
+            controller.ControllerContext = new ControllerContext(viewsUnderTest.HttpContextBase, routeData, controller);
+            controller.Add(model);
 
+            controllersUnderTest.Add("Addition", () => controller);
 
+            viewsUnderTest.RenderAsHtml(new RenderModel<IPublishedContent>(umbracoViewsUnderTest.Content, CultureInfo.CurrentCulture));
         }
 
     }

@@ -1,4 +1,5 @@
-﻿Feature: Rendering TextPage
+﻿@Umbraco
+Feature: Rendering TextPage
 	In order to render an Umbraco textpage
 	As a developer
 	I want to be able to call .Render and get rendered HTML

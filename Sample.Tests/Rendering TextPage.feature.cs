@@ -19,6 +19,7 @@ namespace Sample.Tests
     [System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [NUnit.Framework.TestFixtureAttribute()]
     [NUnit.Framework.DescriptionAttribute("Rendering TextPage")]
+    [NUnit.Framework.CategoryAttribute("Umbraco")]
     public partial class RenderingTextPageFeature
     {
         
@@ -32,7 +33,8 @@ namespace Sample.Tests
         {
             testRunner = TechTalk.SpecFlow.TestRunnerManager.GetTestRunner();
             TechTalk.SpecFlow.FeatureInfo featureInfo = new TechTalk.SpecFlow.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Rendering TextPage", "\tIn order to render an Umbraco textpage\r\n\tAs a developer\r\n\tI want to be able to c" +
-                    "all .Render and get rendered HTML", ProgrammingLanguage.CSharp, ((string[])(null)));
+                    "all .Render and get rendered HTML", ProgrammingLanguage.CSharp, new string[] {
+                        "Umbraco"});
             testRunner.OnFeatureStart(featureInfo);
         }
         
@@ -69,11 +71,11 @@ namespace Sample.Tests
         public virtual void RenderLearnBasics()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Render learn/basics", ((string[])(null)));
-#line 6
-this.ScenarioSetup(scenarioInfo);
 #line 7
- testRunner.When("I render /learn/basics", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+this.ScenarioSetup(scenarioInfo);
 #line 8
+ testRunner.When("I render /learn/basics", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
+#line 9
  testRunner.Then("the result should contain \"Learn the basics\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
             this.ScenarioCleanup();
