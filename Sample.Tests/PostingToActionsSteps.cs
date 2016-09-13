@@ -49,6 +49,8 @@ namespace Sample.Tests
         [When(@"I press add")]
         public void WhenIPressAdd()
         {
+            viewsUnderTest.AddPartial<_Views_Addition_Index_cshtml>("Index");
+
             umbracoViewsUnderTest.LoadAtRoute("/learn/masterclasses");
             umbracoViewsUnderTest.SetupView();
 

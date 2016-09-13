@@ -10,5 +10,5 @@ Scenario: Add two numbers
 	When I press add
 	Then the result should contain 
     """
-        <label name="result">7</label>
+        <label name="result">120</label>
     """

@@ -12,7 +12,8 @@ namespace Sample.Web.Controllers
     {
         public PartialViewResult Index()
         {
-            var model = ControllerContext.ParentActionViewContext.ViewData["AdditionModel"]
+            var model = ViewData["AdditionModel"]
+                        ?? ControllerContext.ParentActionViewContext.ViewData["AdditionModel"]
                         ?? new AdditionModel();
 
             return PartialView(model);
