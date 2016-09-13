@@ -13,9 +13,14 @@ namespace Sample.Tests
     [Scope(Tag="Umbraco")]
     public class UmbracoRouteBindings
     {
-        // Important to add routes at order 2. Umbraco bootup clears routes.
+        // For some reason RouteTable.Routes is reset after this, so have to be called later. (from steps)
         [BeforeScenario(Order=2)]
         public void Setup()
+        {
+            EnsureRoutes();
+        }
+
+        public static void EnsureRoutes()
         {
             RouteTable.Routes.MapRoute(
                 "SurfaceControllers",

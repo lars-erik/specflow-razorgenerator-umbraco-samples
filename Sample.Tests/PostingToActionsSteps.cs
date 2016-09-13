@@ -61,6 +61,8 @@ namespace Sample.Tests
 
             controllersUnderTest.Add("Addition", () => controller);
 
+            UmbracoRouteBindings.EnsureRoutes();
+            ControllersUnderTestSteps.EnsureControllerFactory(controllersUnderTest);
             viewsUnderTest.RenderAsHtml(new RenderModel<IPublishedContent>(umbracoViewsUnderTest.Content, CultureInfo.CurrentCulture));
         }
 

@@ -29,6 +29,7 @@ namespace Sample.Tests
             viewsUnderTest.AddPartial<_Views_Partials_Grid_Editors_Textstring_cshtml>("grid/editors/textstring");
             viewsUnderTest.AddPartial<_Views_Partials_Grid_Editors_Rte_cshtml>("grid/editors/rte");
             viewsUnderTest.AddPartial<_Views_Partials_Grid_Editors_Addition_cshtml>("grid/editors/addition");
+            viewsUnderTest.AddPartial<_Views_Addition_Index_cshtml>("Addition/Index");
         }
     }
 }

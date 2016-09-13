@@ -16,6 +16,11 @@ namespace Sample.Tests.MvcBindings
         [BeforeScenario]
         public void BeforeScenario()
         {
+            EnsureControllerFactory(controllersUnderTest);
+        }
+
+        public static void EnsureControllerFactory(ControllersUnderTest controllersUnderTest)
+        {
             ControllerBuilder.Current.SetControllerFactory(controllersUnderTest.Factory);
         }
     }

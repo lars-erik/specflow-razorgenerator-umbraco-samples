@@ -57,7 +57,7 @@ namespace Sample.Tests.UmbracoBindings
         private void StubViewContext(WebViewPage viewPage, IPublishedContent model)
         {
             var controller = Mock.Of<Controller>();
-            var controllerContext = new ControllerContext(UmbracoContext.HttpContext, new RouteData(), controller);
+            var controllerContext = new ControllerContext(viewsUnderTest.HttpContextBase, new RouteData(), controller);
             controller.ControllerContext = controllerContext;
             viewPage.ViewContext = new ViewContext(controllerContext, Mock.Of<IView>(), new ViewDataDictionary { Model = model }, new TempDataDictionary(), new StringWriter());
         }
